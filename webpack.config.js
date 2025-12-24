@@ -12,11 +12,16 @@ module.exports = async (env, { mode }) => {
     mode: mode,
     entry: './src/main.tsx',
     output: {
-      filename: 'main.js',
+      // filename: 'main.js',
+
+      filename: (pathData) => {
+        return pathData.chunk.name === 'main' ? 'main.js' : '[name].bundle.js';
+      },
+      chunkFilename: '[name].bundle.js',
       path: path.resolve(
         `./dist/components@${process.env.npm_package_version}`
       ),
-      publicPath: `/components@${process.env.npm_package_version}`,
+      publicPath: `./components@${process.env.npm_package_version}/`,
     },
     module: {
       rules: [
@@ -70,6 +75,24 @@ module.exports = async (env, { mode }) => {
     },
     devtool: isDevelopment ? 'source-map' : false,
     optimization: {
+      splitChunks: {
+        chunks: 'all',
+        maxSize: 60 * 1024, // 60KB
+        minSize: 0,
+        cacheGroups: {
+          default: {
+            minChunks: 2,
+            priority: -20,
+            reuseExistingChunk: true,
+          },
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'main',
+            priority: 10,
+            reuseExistingChunk: true,
+          },
+        },
+      },
       minimizer: isDevelopment
         ? []
         : [
